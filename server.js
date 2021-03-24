@@ -19,15 +19,6 @@ app.use(fileUpload({
 // Router
 app.use('/user',require('./Server/router/userRouter'))
 app.use('/api',require('./Server/router/upload'))
-app.use('/movie',require('./Server/router/moviesRouter'))
-app.use('/comment', require('./Server/router/comment'));
-app.use('/like', require('./Server/router/like'));
-app.use('/news', require('./Server/router/NewsRouter'));
-app.use('/favorite', require('./Server/router/favorite'));
-app.use('/theater', require('./Server/router/TheaterRouter'));
-app.use('/theater/theater_room', require('./Server/router/Theater_RoomRouter'));
-app.use('/theater/screening', require('./Server/router/ScreeningRouter'));
-app.use('/theater/ticket', require('./Server/router/ticketRouter'));
 
 
 
@@ -57,7 +48,7 @@ app.use('/', (req,res) => {
     res.json({msg: 'This is Server page!!'})
 });
 
-const Port = process.env.Port || 4000
+const Port = process.env.Port || 8000
 app.listen(Port, () => {
     console.log('Server is running at',Port)
 });

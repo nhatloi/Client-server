@@ -39,7 +39,7 @@ const sendEmail = (to,url,text) =>{
     const mailOptions = {
         from : SENDER_EMAIL_ADDRESS,
         to: to,
-        subject:'The movie',
+        subject:'React app',
         html:`
         <p>Click the link to ${text}</p>
         <a href= ${url}>${url}</a>
