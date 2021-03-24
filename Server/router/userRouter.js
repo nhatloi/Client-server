@@ -17,10 +17,16 @@ router.post('/reset',auth, userCtrl.resetPassword)
 
 router.get('/infor',auth, userCtrl.getUserInfor)
 
-router.get('/all_infor',auth,authAdmin, userCtrl.getAllUserInfor)
+router.get('/all_infor/',auth,authAdmin, userCtrl.getAllUserInfor)
 
 router.get('/logout', userCtrl.logout)
 
 router.patch('/update',auth, userCtrl.updateUser)
+
+router.delete('/delete/:id',auth,authAdmin,userCtrl.deleteUser)
+
+router.post('/google_login', userCtrl.googleLogin)
+
+router.post('/facebook_login', userCtrl.facebookLogin)
 
 module.exports = router

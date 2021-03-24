@@ -3,6 +3,11 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const sendEmail = require('./sendMail')
 
+const {google} = require('googleapis')
+const {OAuth2} = google.auth
+const client = new OAuth2(process.env.MAILING_SERVICE_CLIENT_ID)
+const fetch = require('node-fetch')
+
 const CLIENT_URL = process.env.CLIENT_URL
 const saltOrRounds = 10
 
@@ -137,7 +142,6 @@ const userCtrl = {
     getUserInfor :async (req,res) =>{
         try{
             const user = await Users.findById(req.user.id).select('-password')
-
             res.json(user)
 
         }catch(err){
@@ -147,9 +151,8 @@ const userCtrl = {
     
     getAllUserInfor :async (req,res) =>{
         try{
-            const user = await Users.findById(req.user.id).select('-password')
-            res.json(user)
-
+            const user = await Users.find({ role: 0 }).select('-password')
+            return res.json({user:user})
         }catch(err){
             return res.status(500).json({msg: err.message})
         }
@@ -185,10 +188,105 @@ const userCtrl = {
             return res.status(500).json({msg: err.message})
         }
     },
+
+    googleLogin: async (req,res) =>{
+        try{
+            const {tokenId} = req.body
+            if(!tokenId) return
+
+            const verify = await client.verifyIdToken({idToken:tokenId,audience:process.env.MAILING_SERVICE_CLIENT_ID})
+
+            const {email_verified,email,name,picture} = verify.payload
+
+            const password = email + process.env.GOOGLE_SECTET
+
+            const passwordHash = await bcrypt.hash(password,saltOrRounds)
+
+            if(!email_verified)  return res.status(500).json({msg: 'Email verification failed.'})
+
+            if(email_verified){
+                const user = await Users.findOne({email})
+                if(user){
+                    const isMatch = await bcrypt.compare(password, user.password)
+                    if(!isMatch) return res.status(400).json({msg:'The account has been registered with a different password.'})
+
+                    const refresh_token = createRefreshToken({id:user._id})
+                    res.cookie('refreshtoken',refresh_token,{
+                        httpOnly:true,
+                        path: '/user/refresh_token',
+                        maxAge: 7*24*60*60*1000
+                    })
+                    res.json({msg:'Loggin success!'})
+                }else{
+                    const newUser = new Users({
+                        name,email,password:passwordHash,avatar:picture
+                    })
+                    await newUser.save()
+                    const refresh_token = createRefreshToken({id:newUser._id})
+                    res.cookie('refreshtoken',refresh_token,{
+                        httpOnly:true,
+                        path: '/user/refresh_token',
+                        maxAge: 7*24*60*60*1000
+                    })
+                    res.json({msg:'Loggin success!'})
+                }
+
+            }
+            
+        }catch(err){
+            return res.status(500).json({msg: err.message})
+        }
+    },
+
+    facebookLogin: async (req,res) =>{
+        try{
+
+           const {accessToken,userID}  = req.body
+            if(!accessToken) return
+
+            const URL = `https://graph.facebook.com/v2.9/${userID}/?fields=id,name,email,picture&access_token=${accessToken}`
+
+            const data = await fetch(URL).then(res => res.json()).then(res => {return res})
+
+            const {email,name,picture} = data
+
+            const password = email + process.env.FACEBOOK_SECTET
+
+            const passwordHash = await bcrypt.hash(password,saltOrRounds)
+
+            const user = await Users.findOne({email})
+
+                if(user){
+                    const isMatch = await bcrypt.compare(password, user.password)
+                    if(!isMatch) return res.status(400).json({msg:'The account has been registered with a different password.'})
+
+                    const refresh_token = createRefreshToken({id:user._id})
+                    res.cookie('refreshtoken',refresh_token,{
+                        httpOnly:true,
+                        path: '/user/refresh_token',
+                        maxAge: 7*24*60*60*1000
+                    })
+                    res.json({msg:'Loggin success!'})
+                }else{
+                    const newUser = new Users({
+                        name,email,password:passwordHash,avatar:picture.data.url
+                    })
+                    await newUser.save()
+                    const refresh_token = createRefreshToken({id:newUser._id})
+                    res.cookie('refreshtoken',refresh_token,{
+                        httpOnly:true,
+                        path: '/user/refresh_token',
+                        maxAge: 7*24*60*60*1000
+                    })
+                    res.json({msg:'Loggin success!'})
+                }
+            
+        }catch(err){
+            return res.status(500).json({msg: err.message})
+        }
+    },
+
 }
-
-
-
 
 
 
