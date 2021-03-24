@@ -9,6 +9,7 @@ import ForgotPw from '../../auth/ForgotPw';
 import ResetPassword from '../../auth/ResetPassword'
 import Notfound from '../../utils/Notfound'
 import Successfully from '../../utils/Successfully'
+import Home from '../View/Home'
 
 
 
@@ -30,14 +31,13 @@ function Body() {
                     <Route exact path="/register" component={isLogged? Notfound: Register}/>
                     <Route exact path="/forgot" component={isLogged? Notfound:ForgotPw}/>
                     <Route exact path="/user/reset/:token" component={isLogged? Notfound:ResetPassword}/>
-
                     {/* notification */}
                     <Route exact path="/success/:title/:subTitle" component={Successfully}/>
 
                     {/* no need to login */}
                     <Route exact path="/user/activation/:activation_token" component={ActiveEmail}/>
-  
                     
+                    <Route exact path="/" component={Home}/>
                 </Switch>
             </section>
       </div>
